@@ -1,0 +1,22 @@
+save_path = "./out"
+data_path = "/dataset/ImageNet/Classification/"
+dataset = "ImageNet"
+arch = "resnet18"
+seed = 0
+nGPU = 4
+gpu = 4
+dist = True
+
+# Train options
+epochs = 120
+batch_size = 256
+
+# model optimizer option
+weight_decay = 4e-5
+optim = "sgd"
+grad_clip = 5
+warmup = 5
+LR = 0.01
+ml_step = [60, 90]
+
+print_freq = 100

@@ -1,0 +1,6 @@
+out/
+__pycache__/
+.ipynb*
+*.ipynb
+*/**.pyc
+*/__pycache__/*

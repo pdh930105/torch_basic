@@ -214,7 +214,7 @@ class CrossEntropyLabelSmooth(nn.Module):
         return loss
 
 
-def get_optimizer_scheduler(parameters, config):
+def get_optimizer_scheduler(model, config):
     assert (
         hasattr(config, "optimizer")
         and hasattr(config, "scheduler")
@@ -224,7 +224,7 @@ def get_optimizer_scheduler(parameters, config):
     )
     if config.optimizer.lower() == "sgd":
         optim = torch.optim.SGD(
-            parameters,
+            model.parameters(),
             config.LR,
             momentum=config.momentum,
             weight_decay=config.weight_decay,
@@ -232,15 +232,15 @@ def get_optimizer_scheduler(parameters, config):
         )
     elif config.optimizer.lower() == "rmsprop":
         optim = torch.optim.RMSprop(
-            parameters, config.LR, momentum=config.momentum, weight_decay=config.weight_decay
+            model.parameters(), config.LR, momentum=config.momentum, weight_decay=config.weight_decay
         )
     elif config.optimizer.lower() == "adam":
         optim = torch.optim.Adam(
-            parameters, config.LR, betas = config.betas, eps = config.adam_eps, weight_decay= config.weight_decay
+            model.parameters(), config.LR, betas = config.betas, eps = config.adam_eps, weight_decay= config.weight_decay
         )
     elif config.optimizer.lower() == "adamw":
         optim = torch.optim.AdamW(
-            parameters, config.LR, betas = config.betas, eps = config.adam_eps, weight_decay= config.weight_decay
+            model.parameters(), config.LR, betas = config.betas, eps = config.adam_eps, weight_decay= config.weight_decay
         )
         
     else:
@@ -264,9 +264,9 @@ def get_optimizer_scheduler(parameters, config):
     else:
         raise ValueError("invalid scheduler : {:}".format(config.scheduler))
 
-    if config.criterion == "Softmax":
+    if config.criterion == "CE" or config.criterion == "Softmax":
         criterion = torch.nn.CrossEntropyLoss()
-    elif config.criterion == "SmoothSoftmax":
+    elif config.criterion == "SmoothSoftmax" or config.criterion == "LabelSmoothCE":
         criterion = CrossEntropyLabelSmooth(config.class_num, config.label_smooth)
     else:
         raise ValueError("invalid criterion : {:}".format(config.criterion))

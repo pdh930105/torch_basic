@@ -33,12 +33,7 @@ class Trainer(object):
 		"""
 		
 		self.config = options
-		
-		self.model = utils.data_parallel(
-			model, self.config.nGPU, self.config.GPU)
-		
-		self.all_idx = torch.IntTensor([x for x in range(self.config.nClasses)]).cuda()
-		
+		self.model = model
 		self.train_loader = train_loader
 		self.test_loader = test_loader
 		self.loss = loss
@@ -46,6 +41,8 @@ class Trainer(object):
 		self.logger = logger
 		self.run_count = run_count
 		self.scalar_info = {}
+		self.total_batch_iter = len((self.train_loader))
+
 
 	def forward(self, images, labels):
 		"""
@@ -68,7 +65,7 @@ class Trainer(object):
 		loss.backward()
 		self.optimizer.step()
 
-	def train(self, epoch):
+	def train(self, epoch, device_id):
 		"""
 		training
 		"""
@@ -78,25 +75,24 @@ class Trainer(object):
 
 
 		self.model.train()
-		
+		if self.config.dist:
+			self.train_loader.batch_sampler.sampler.set_epoch(epoch)
 		start_time = time.time()
 		end_time = start_time
-		total_batch_iter = len(list(self.train_loader))
+  
 		for idx, (images, labels) in enumerate(self.train_loader):
-			images = images.cuda()
-			labels = labels.cuda()
-
+			images = images.cuda(device_id, non_blocking=True)
+			labels = labels.cuda(device_id, non_blocking=True)
 			output, loss = self.forward(images, labels)
-			
+			self.backward(loss)
 			# compute accuracy
 			top1_acc, top5_acc = compute_accuracy(output, labels, topk=[1, 5])
 			total_top1_acc.update(top1_acc.item(), images.size(0))
 			total_top5_acc.update(top5_acc.item(), images.size(0))
 			total_loss.update(loss.item(), images.size(0))			
-
-			if idx % self.config.print_freq == 0:
+			if idx % self.config.print_freq == 0 and device_id == 0:
 				batch_result = "[Epoch {}/{}] [Batch {}/{}] [loss : {:.4f}] [top1 acc : {:.4f}] [top5 acc : {:.4f}]".format(
-					epoch, self.config.epochs, idx, total_batch_iter, total_loss.avg, total_top1_acc.avg, total_top5_acc.avg
+					epoch, self.config.epochs, idx, self.total_batch_iter, total_loss.avg, total_top1_acc.avg, total_top5_acc.avg
 				)
 				self.logger.log(batch_result)
 		end_time = time.time()

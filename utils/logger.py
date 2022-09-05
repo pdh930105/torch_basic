@@ -4,7 +4,7 @@ import os, sys, time, numpy as np
 from torch.utils.tensorboard import SummaryWriter
 
 class Logger(object):
-    def __init__(self, save_path, seed, create_model_dir=True, use_tfb=False, use_wandb=False):
+    def __init__(self, save_path, seed, create_model_dir=True, use_tfb=False, use_wandb=False, **kwargs):
         """Create a summary writer logging to log_dir."""
         self.seed = int(seed)
         self.log_dir = Path(save_path) / "log"
@@ -16,16 +16,17 @@ class Logger(object):
         
         self.use_tfb = use_tfb
         self.use_wandb = use_wandb
+        self.logger_path = self.log_dir / "seed-{:}-T-{:}.log".format(
+            self.seed, time.strftime("%d-%h-at-%H-%M-%S", time.gmtime(time.time()))
+        )
+        self.logger_file = open(self.logger_path, "w")
         
         if self.use_tfb:
             self.tensorboard_dir = self.log_dir / (
                 "tensorboard-{:}".format(time.strftime("%d-%h", time.gmtime(time.time())))
             )
             # self.tensorboard_dir = self.log_dir / ('tensorboard-{:}'.format(time.strftime( '%d-%h-at-%H:%M:%S', time.gmtime(time.time()) )))
-            self.logger_path = self.log_dir / "seed-{:}-T-{:}.log".format(
-                self.seed, time.strftime("%d-%h-at-%H-%M-%S", time.gmtime(time.time()))
-            )
-            self.logger_file = open(self.logger_path, "w")
+
             self.tensorboard_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
             self.writer = SummaryWriter(str(self.tensorboard_dir))
         else:

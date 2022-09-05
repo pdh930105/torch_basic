@@ -3,7 +3,9 @@ import numpy as np
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
-    def __init__(self):
+    def __init__(self, name:str = None, fmt: str = ":f"):
+        self.name = name
+        self.fmt = fmt
         self.reset()
 
     def reset(self):
@@ -22,6 +24,10 @@ class AverageMeter(object):
         return "{name}(val={val}, avg={avg}, count={count})".format(
             name=self.__class__.__name__, **self.__dict__
         )
+    def __str__(self):
+        fmtstr = "{name} {val" + self.fmt + "} ({avg" + self.fmt + "})"
+        return fmtstr.format(**self.__dict__)
+
 
 def compute_accuracy(output, target, topk=(1,)):
     """Computes the precision@k for the specified values of k"""
